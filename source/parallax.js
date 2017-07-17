@@ -33,11 +33,23 @@
     originY: 0.5
   };
 
-  function Parallax(element, options) {
+  function getAllElementsWithAttribute(element, attribute) {
+    var matchingElements = [];
+    var allElements = element.getElementsByTagName('*');
+    for (var i = 0, n = allElements.length; i < n; i++)
+    {
+      if (allElements[i].getAttribute(attribute) !== null)
+      {
+        // Element exists with attribute. Add to array.
+        matchingElements.push(allElements[i]);
+      }
+    }
+    return matchingElements;
+  }
 
+  function Parallax(element, options) {
     // DOM Context
     this.element = element;
-    this.layers = element.getElementsByClassName('layer');
 
     // Data Extraction
     var data = {
@@ -235,16 +247,13 @@
 
     // Cache Layer Elements
     this.layers = this.element.getElementsByClassName('layer');
+    this.layers = getAllElementsWithAttribute(this.element, 'data-depth');
     this.depths = [];
 
     // Configure Layer Styles
     for (var i = 0, l = this.layers.length; i < l; i++) {
       var layer = this.layers[i];
       if (this.transform3DSupport) this.accelerate(layer);
-      layer.style.position = i ? 'absolute' : 'relative';
-      layer.style.display = 'block';
-      layer.style.left = 0;
-      layer.style.top = 0;
 
       // Cache Layer Depth
       this.depths.push(this.data(layer, 'depth') || 0);
