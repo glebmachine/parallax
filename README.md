@@ -1,227 +1,364 @@
-# Parallax.js
+![Parallax.js](logo.png)
+
+[![CDNJS](https://img.shields.io/cdnjs/v/parallax.svg)](https://cdnjs.com/libraries/parallax)
 
 Parallax Engine that reacts to the orientation of a smart device. Where no gyroscope or motion detection hardware is available, the position of the cursor is used instead.
 
-Check out this **[demo][demo]** to see it in action!
+Check out the **[demo](https://wagerfield.github.com/parallax/)** to see it in action!
 
-## Setup
+# Table of Contents
 
-Create a list of elements giving each item that you want to move within your parallax scene a class of `layer` and a `data-depth` attribute specifying its depth within the scene. A depth of **0** will cause the layer to remain stationary, and a depth of **1** will cause the layer to move by the total effect of the calculated motion. Values inbetween **0** and **1** will cause the layer to move by an amount relative to the supplied ratio.
+- [1. Getting started](#1-getting-started)
+	- [1.1 Installation](#11-installation)
+	- [1.2 Preparations](#12-preparations)
+	- [1.3 Run Parallax](#13-run-parallax)
+- [2. Configuration](#2-configuration)
+	- [2.1 Programmatic vs Declarative](#21-programmatic-vs-declarative)
+	- [2.2 Configuration Options](#22-configuration-options)
+- [3. Methods](#3-methods)
+- [4. Development](#4-development)
+	- [4.1 Running the Project](#41-running-the-project)
+	- [4.2 Opening an Issue](#42-opening-an-issue)
+	- [4.3 Known Issues](#43-known-issues)
+- [5. FAQ](#5-faq)
+- [6. Information](#6-information)
+   - [6.1 License](#61-license)
+   - [6.2 Contributors](#62-authors)
+
+# 1. Getting started
+
+## 1.1 Installation
+
+### 1.1 a) Using the CDN
+
+1. Add `<script src="https://cdnjs.cloudflare.com/ajax/libs/parallax/3.1.0/parallax.min.js"></script>` to your markup
+2. Done!
+
+Many thanks to the fine folks over at [cdnjs](https://cdnjs.com/) for hosting our library.
+
+### 1.1 b) Beginners
+
+1. Head over to the [releases](https://github.com/wagerfield/parallax/releases) Section
+2. Download `compiled.zip` from the latest release
+3. Extract the ZIP archive and locate the `parallax.js` and `parallax.min.js` files
+	- Use `parallax.js` if you want to snoop around in the code
+	- Use `parallax.min.js` for deployment, because it has a smaller file size
+4. Copy the file of your choice into your project directory
+5. So far, so good!
+
+### 1.1 c) Professionals
+
+`npm i -s parallax-js`
+
+You will then find the source code in `node_modules/parallax-js/src/parallax.js` and the browserified, babelified, uglified, production-ready version in `node_modules/parallax-js/dist/parallax.min.js`
+
+## 1.2 Preparations
+
+### Include the Script
+
+If you use the compiled version, either downloaded from the releases page, or copied from the `dist` folder, include the script like any other Javascript library:  
+`<script src="path/to/parallax.js"></script>`
+
+Of course, when you've installed via npm, and use browserify/babel, you can also simply do:  
+`import Parallax from 'parallax-js'` or  
+`const Parallax = require('parallax-js')`
+
+### Create your HTML elements
+
+Each Parallax.js instance needs a container element, the scene. You're free to identify it by any means you want, but for now, let's use an ID:
 
 ```html
-<ul id="scene">
-  <li class="layer" data-depth="0.00"><img src="layer1.png"></li>
-  <li class="layer" data-depth="0.20"><img src="layer2.png"></li>
-  <li class="layer" data-depth="0.40"><img src="layer3.png"></li>
-  <li class="layer" data-depth="0.60"><img src="layer4.png"></li>
-  <li class="layer" data-depth="0.80"><img src="layer5.png"></li>
-  <li class="layer" data-depth="1.00"><img src="layer6.png"></li>
-</ul>
+<div id="scene">
+</div>
 ```
 
-To kickoff a **Parallax** scene, select your parent DOM Element and pass it to the **Parallax** constructor.
+Per default, all direct child elements of the scene will become moving objects, the layers. You can change this to a custom query selector, but again, we're going with the easiest approach for now:
+
+```html
+<div id="scene">
+  <div>My first Layer!</div>
+  <div>My second Layer!</div>
+</div>
+```
+
+While all other options and parameters are optional, with sane defaults, and can be set programatically, each layer needs a `data-depth` attribute. The movement applied to each layer will be multiplied by its depth attribute.
+
+```html
+<div id="scene">
+  <div data-depth="0.2">My first Layer!</div>
+  <div data-depth="0.6">My second Layer!</div>
+</div>
+```
+
+## 1.3 Run Parallax
+
+As soon as your DOM is ready and loaded, you can create a new Parallax.js instance, providing your scene element as first parameter.
 
 ```javascript
 var scene = document.getElementById('scene');
-var parallax = new Parallax(scene);
+var parallaxInstance = new Parallax(scene);
 ```
 
-## Understanding Layer Motion Calculations
+That's it, you're running Parallax.js now!
 
-The amount of motion that each layer moves by depends on 3 contributing factors:
+# 2. Configuration
 
-1. The `scalarX` and `scalarY` values (see [Behaviours](#behaviours) below for configuration)
-2. The dimensions of the parent DOM element
-3. The `depth` of a layer within a parallax scene (specified by it's `data-depth` attribute)
+## 2.1 Programmatic vs Declarative
 
-The calculation for this motion is as follows:
+Most configuration settings can be declared either as data-value attribute of the scene element, or property of the configuration object. The programmatic approach will take priority over the data-value attributes set in the HTML.  
+Some options can also be set at run-time via instance methods.
 
-```coffeescript
-xMotion = parentElement.width  * (scalarX / 100) * layerDepth
-yMotion = parentElement.height * (scalarY / 100) * layerDepth
-```
-
-So for a layer with a `data-depth` value of `0.5` within a scene that has both the `scalarX` and `scalarY` values set to `10` ( *the default* ) where the containing scene element is `1000px x 1000px`, the total motion of the layer in both `x` and `y` would be:
-
-```coffeescript
-xMotion = 1000 * (10 / 100) * 0.5 = 50 # 50px of positive and negative motion in x
-yMotion = 1000 * (10 / 100) * 0.5 = 50 # 50px of positive and negative motion in y
-```
-
-## Behaviours
-
-There are a number of behaviours that you can setup for any given **Parallax** instance. These behaviours can either be specified in the markup via data attributes or in JavaScript via the constructor and API.
-
-| Behaviour           | Values              | Description                                                                                                                                          |
-| ------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `relativeInput`     | `true` or `false`   | Specifies whether or not to use the coordinate system of the `element` passed to the parallax `constructor`. **Mouse input only.**                   |
-| `clipRelativeInput` | `true` or `false`   | Specifies whether or not to clip the mouse input to the bounds of the `element` passed to the parallax `constructor`. **Mouse input only.**          |
-| `calibrate-x`       | `true` or `false`   | Specifies whether or not to cache & calculate the motion relative to the initial `x` axis value on initialisation.                                   |
-| `calibrate-y`       | `true` or `false`   | Specifies whether or not to cache & calculate the motion relative to the initial `y` axis value on initialisation.                                   |
-| `invert-x`          | `true` or `false`   | `true` moves layers in opposition to the device motion, `false` slides them away.                                                                    |
-| `invert-y`          | `true` or `false`   | `true` moves layers in opposition to the device motion, `false` slides them away.                                                                    |
-| `limit-x`           | `number` or `false` | A numeric value limits the total range of motion in `x`, `false` allows layers to move with complete freedom.                                        |
-| `limit-y`           | `number` or `false` | A numeric value limits the total range of motion in `y`, `false` allows layers to move with complete freedom.                                        |
-| `scalar-x`          | `number`            | Multiplies the input motion by this value, increasing or decreasing the sensitivity of the layer motion.                                             |
-| `scalar-y`          | `number`            | Multiplies the input motion by this value, increasing or decreasing the sensitivity of the layer motion.                                             |
-| `friction-x`        | `number` `0 - 1`    | The amount of friction the layers experience. This essentially adds some easing to the layer motion.                                                 |
-| `friction-y`        | `number` `0 - 1`    | The amount of friction the layers experience. This essentially adds some easing to the layer motion.                                                 |
-| `origin-x`          | `number`            | The `x` origin of the mouse input. Defaults to 0.5 (the center). `0` moves the origin to the left edge, `1` to the right edge. **Mouse input only.** |
-| `origin-y`          | `number`            | The `y` origin of the mouse input. Defaults to 0.5 (the center). `0` moves the origin to the top edge, `1` to the bottom edge. **Mouse input only.** |
-
-In addition to the behaviours described above, there are **two** methods `enable()` and `disable()` that *activate* and *deactivate* the **Parallax** instance respectively.
-
-### Behaviours: Data Attributes Example
+Declarative:
 
 ```html
-<ul id="scene"
-  data-calibrate-x="false"
-  data-calibrate-y="true"
-  data-invert-x="false"
-  data-invert-y="true"
-  data-limit-x="false"
-  data-limit-y="10"
-  data-scalar-x="2"
-  data-scalar-y="8"
-  data-friction-x="0.2"
-  data-friction-y="0.8"
-  data-origin-x="0.0"
-  data-origin-y="1.0">
-  <li class="layer" data-depth="0.00"><img src="graphics/layer1.png"></li>
-  <li class="layer" data-depth="0.20"><img src="graphics/layer2.png"></li>
-  <li class="layer" data-depth="0.40"><img src="graphics/layer3.png"></li>
-  <li class="layer" data-depth="0.60"><img src="graphics/layer4.png"></li>
-  <li class="layer" data-depth="0.80"><img src="graphics/layer5.png"></li>
-  <li class="layer" data-depth="1.00"><img src="graphics/layer6.png"></li>
-</ul>
+<div data-relative-input="true" id="scene">
+  <div data-depth="0.2">My first Layer!</div>
+  <div data-depth="0.6">My second Layer!</div>
+</div>
 ```
 
-### Behaviours: Constructor Object Example
+Programmatic:
 
 ```javascript
 var scene = document.getElementById('scene');
-var parallax = new Parallax(scene, {
-  calibrateX: false,
-  calibrateY: true,
-  invertX: false,
-  invertY: true,
-  limitX: false,
-  limitY: 10,
-  scalarX: 2,
-  scalarY: 8,
-  frictionX: 0.2,
-  frictionY: 0.8,
-  originX: 0.0,
-  originY: 1.0
+var parallaxInstance = new Parallax(scene, {
+  relativeInput: true
 });
 ```
 
-### Behaviours: API Example
+Using Methods at Runtime:
 
 ```javascript
-var scene = document.getElementById('scene');
-var parallax = new Parallax(scene);
-parallax.enable();
-parallax.disable();
-parallax.updateLayers(); // Useful for reparsing the layers in your scene if you change their data-depth value
-parallax.calibrate(false, true);
-parallax.invert(false, true);
-parallax.limit(false, 10);
-parallax.scalar(2, 8);
-parallax.friction(0.2, 0.8);
-parallax.origin(0.0, 1.0);
+parallaxInstance.friction(0.2, 0.2);
 ```
 
-## jQuery
+## 2.2 Configuration Options
 
-If you're using **[jQuery][jquery]** or **[Zepto][zepto]** and would prefer to
-use **Parallax.js** as a plugin, you're in luck!
+### relativeInput
+
+Property: **relativeInput**  
+Attribute: **data-relative-input**
+
+Value: *boolean*  
+Default: *false*
+
+Makes mouse input relative to the position of the scene element.  
+No effect when gyroscope is used.
+
+### clipRelativeInput
+
+Property: **clipRelativeInput**  
+Attribute: **data-clip-relative-input**
+
+Value: *boolean*  
+Default: *false*
+
+Clips mouse input to the bounds of the scene. This means the movement stops as soon as the edge of the scene element is reached by the cursor.  
+No effect when gyroscope is used, or `hoverOnly` is active.
+
+### hoverOnly
+
+Property: **hoverOnly**  
+Attribute: **data-hover-only**
+
+Value: *boolean*  
+Default: *false*
+
+Parallax will only be in effect while the cursor is over the scene element, otherwise all layers move back to their initial position. Works best in combination with `relativeInput`.  
+No effect when gyroscope is used.
+
+### inputElement
+
+Property: **inputElement**  
+Attribute: **data-input-element**  
+Method: **setInputElement(HTMLElement)**
+
+Value: *null* or *HTMLElement* / *String*  
+Default: *null*
+
+Allows usage of a different element for cursor input.  
+The configuration property expects an HTMLElement, the data value attribute a query selector string.  
+Will only work in combination with `relativeInput`, setting `hoverOnly` might make sense too.  
+No effect when gyroscope is used.
+
+### calibrateX & calibrateY
+
+Property: **calibrateX** & **calibrateY**  
+Attribute: **data-calibrate-x** & **data-calibrate-y**  
+Method: **calibrate(x, y)**
+
+Value: *boolean*  
+Default: *false* for X, *true* for Y
+
+Caches the initial X/Y axis value on initialization and calculates motion relative to this.  
+No effect when cursor is used.
+
+### invertX & invertY
+
+Property: **invertX** & **invertY**  
+Attribute: **data-invert-x** & **data-invert-y**  
+Method: **invert(x, y)**
+
+Value: *boolean*  
+Default: *true*
+
+Inverts the movement of the layers relative to the input. Setting both of these values to *false* will cause the layers to move with the device motion or cursor.
+
+### limitX & limitY
+
+Property: **limitX** & **limitY**  
+Attribute: **data-limit-x** & **data-limit-y**  
+Method: **limit(x, y)**
+
+Value: *false* or *integer*  
+Default: *false*
+
+Limits the movement of layers on the respective axis. Leaving this value at false gives complete freedom to the movement.
+
+### scalarX & scalarY
+
+Property: **scalarX** & **scalarY**  
+Attribute: **data-scalar-x** & **data-scalar-y**  
+Method: **scalar(x, y)**
+
+Value: *float*  
+Default: *10.0*
+
+Multiplies the input motion by this value, increasing or decreasing the movement speed and range.
+
+### frictionX & frictionY
+
+Property: **frictionX** & **frictionY**  
+Attribute: **data-friction-x** & **data-friction-y**  
+Method: **friction(x, y)**
+
+Value: *float* between *0* and *1*  
+Default: *0.1*
+
+Amount of friction applied to the layers. At *1* the layers will instantly go to their new positions, everything below 1 adds some easing.  
+The default value of *0.1* adds some sensible easing. Try *0.15* or *0.075* for some difference.
+
+### originX & originY
+
+Property: **originX** & **originY**  
+Attribute: **data-origin-x** & **data-origin-y**  
+Method: **origin(x, y)**
+
+Value: *float* between *0* and *1*  
+Default: *0.5*
+
+X and Y origin of the mouse input. The default of *0.5* refers to the center of the screen or element, *0* is the left (X axis) or top (Y axis) border, 1 the right or bottom.  
+No effect when gyroscope is used.
+
+### precision
+
+Property: **precision**  
+Attribute: **data-precision**
+
+Value: *integer*  
+Default: *1*
+
+Decimals the element positions will be rounded to. *1* is a sensible default which you should not need to change in the next few years, unless you have a very interesting and unique setup.
+
+### selector
+
+Property: **selector**  
+Attribute: **data-selector**
+
+Value: *null* or *string*  
+Default: *null*
+
+String that will be fed to querySelectorAll on the scene element to select the layer elements. When *null*, will simply select all direct child elements.  
+Use `.layer` for legacy behaviour, selecting only child elements having the class name *layer*.
+
+### pointerEvents
+
+Property: **pointerEvents**  
+Attribute: **data-pointer-events**
+
+Value: *boolean*  
+Default: *false*
+
+Set to *true* to enable interactions with the scene and layer elements. When set to the default of *false*, the CSS attribute `pointer-events: none` will be applied for performance reasons.  
+Setting this to *true* alone will not be enough to fully interact with all layers, since they will be overlapping. You have to either set `position: absolute` on all layer child elements, or keep **pointerEvents** at *false* and set `pointer-events: all` for the interactable elements only.
+
+### onReady
+
+Property: **onReady**
+
+Value: *null* or *function*  
+Default: *null*
+
+Callback function that will be called as soon as the Parallax instance has finished its setup. This might currently take up to 1000ms (`calibrationDelay * 2`).
+
+# 3. Methods
+
+In addition to the configuration methods outlined in the section above, there are a few more publicly accessible methods:
+
+### enable()
+
+Enables a disabled Parallax instance.
+
+### disable()
+
+Disables a running Parallax instance.
+
+### destroy()
+
+Completely destroys a Parallax instance, allowing it to be garbage collected.
+
+### version()
+
+Returns the version number of the Parallax library.
+
+# 4. Development
+
+## 4.1 Running the Project
+
+1. Clone the Repository `git clone git@github.com:wagerfield/parallax.git`
+2. Open the working directory `cd parallax`
+3. Install dependencies `npm install`
+4. Run development server `gulp watch`
+5. Open [http://localhost:9000/](http://localhost:9000/) in browser
+
+## 4.2 Opening an Issue
+
+If you need help relating the direct usage of this library in a project of yours, provide us with a working, running example of your work. This can be a GitHub repository, a ZIP file containing your work, a project on CodePen or JSFiddle, you name it.  
+*Do not complain about something not working without giving us some way to help you.* Thank you!
+
+## 4.3 Known Issues
+
+### SVG-Bug in MS Edge
+
+It seems MS Edge does not support the `children` or `querySelectorAll` methods for SVG elements.
+
+# 5. FAQ
+
+### How can I use this Library with jQuery?
+
+jQuery will not prevent you from using this library in any way. If you want to use jQuery for selecting your Parallax scene element, you can do so too.
 
 ```javascript
-$('#scene').parallax();
+var scene = $('#scene').get(0);
+var parallaxInstance = new Parallax(scene);
 ```
 
-### jQuery: Passing Options
+### How can I interact with my layers?
 
-```javascript
-$('#scene').parallax({
-  calibrateX: false,
-  calibrateY: true,
-  invertX: false,
-  invertY: true,
-  limitX: false,
-  limitY: 10,
-  scalarX: 2,
-  scalarY: 8,
-  frictionX: 0.2,
-  frictionY: 0.8,
-  originX: 0.0,
-  originY: 1.0
-});
-```
-### jQuery: API
+Check out the section on the configuration option `pointerEvents` above.
 
-```javascript
-var $scene = $('#scene').parallax();
-$scene.parallax('enable');
-$scene.parallax('disable');
-$scene.parallax('updateLayers');
-$scene.parallax('calibrate', false, true);
-$scene.parallax('invert', false, true);
-$scene.parallax('limit', false, 10);
-$scene.parallax('scalar', 2, 8);
-$scene.parallax('friction', 0.2, 0.8);
-$scene.parallax('origin', 0.0, 1.0);
-```
+### How do I get the demo files to work?
 
-## iOS
+Either download compiled_with_examples.zip from the [GitHub Releases](https://github.com/wagerfield/parallax/releases) section, or follow section 4.1
 
-If you are writing a **native iOS application** and would like to use **parallax.js** within a `UIWebView`, you will need to do a little bit of work to get it running.
 
-`UIWebView` no longer automatically receives the `deviceorientation` event, so your native application must intercept the events from the gyroscope and reroute them to the `UIWebView`:
+# 6. Information
 
-1. Include the **CoreMotion** framework `#import <CoreMotion/CoreMotion.h>` and create a reference to the **UIWebView** `@property(nonatomic, strong) IBOutlet UIWebView *parallaxWebView;`
-2. Add a property to the app delegate (or controller that will own the **UIWebView**) `@property(nonatomic, strong) CMMotionManager *motionManager;`
-3. Finally, make the following calls:
+## 6.1 License
 
-```Objective-C
-self.motionManager = [[CMMotionManager alloc] init];
-if (self.motionManager.isGyroAvailable && !self.motionManager.isGyroActive) {
-  [self.motionManager setGyroUpdateInterval:0.5f]; // Set the event update frequency (in seconds)
-  [self.motionManager startGyroUpdatesToQueue:NSOperationQueue.mainQueue
-                                  withHandler:^(CMGyroData *gyroData, NSError *error) {
-    NSString *js = [NSString stringWithFormat:@"parallax.onDeviceOrientation({beta:%f, gamma:%f})", gyroData.rotationRate.x, gyroData.rotationRate.y];
-    [self.parallaxWebView stringByEvaluatingJavaScriptFromString:js];
-  }];
-}
-```
+This project is licensed under the terms of the  [MIT](http://www.opensource.org/licenses/mit-license.php) License. Enjoy!
 
-## Build
+## 6.2 Authors
 
-> As a prerequisite, you will need [gulp][gulp] installed: `npm install -g gulp`
-
-```
-npm install
-gulp
-```
-
-During development you can have gulp watch the `source` directory for changes and automatically build the `deploy` files by running:
-
-```
-gulp watch
-```
-
-## Author
-
-Matthew Wagerfield: [@wagerfield][twitter]
-
-## License
-
-Licensed under [MIT][mit]. Enjoy.
-
-[demo]: http://wagerfield.github.com/parallax/
-[twitter]: http://twitter.com/wagerfield
-[mit]: http://www.opensource.org/licenses/mit-license.php
-[jquery]: http://jquery.com/
-[zepto]: http://zeptojs.com/
-[gulp]: http://gulpjs.com/
+Matthew Wagerfield: [@wagerfield](http://twitter.com/wagerfield)  
+René Roth: [Website](http://reneroth.org/)
