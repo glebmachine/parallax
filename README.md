@@ -291,6 +291,16 @@ Default: *null*
 
 Callback function that will be called as soon as the Parallax instance has finished its setup. This might currently take up to 1000ms (`calibrationDelay * 2`).
 
+
+### skipAdditionalCSSProperties
+
+Property: **skipAdditionalCSSProperties**
+
+Value: *true* or *false*  
+Default: *false*
+
+This property skip to set default `display`, `top`, `left` and `position` CSS properties.
+
 # 3. Methods
 
 In addition to the configuration methods outlined in the section above, there are a few more publicly accessible methods:
