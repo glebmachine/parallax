@@ -260,7 +260,7 @@ class Parallax {
     }
 
     let style = window.getComputedStyle(this.element)
-    if (style.getPropertyValue('position') === 'static') {
+    if (!this.skipAdditionalCSSProperties && style.getPropertyValue('position') === 'static') {
       this.element.style.position = 'relative'
     }
 
@@ -303,9 +303,13 @@ class Parallax {
         helpers.accelerate(layer)
       }
 
-      if (this.skipAdditionalCSSProperties) { 
+      if (!this.skipAdditionalCSSProperties) { 
+        debugger;
         layer.style.position = index ? 'absolute' : 'relative'
         layer.style.display = 'block'
+      }
+
+      if (!this.skipAdditionalCSSProperties && (this.transform3DSupport || this.transform3DSupport)) {
         layer.style.left = 0
         layer.style.top = 0
       }
